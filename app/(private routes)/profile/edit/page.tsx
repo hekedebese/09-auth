@@ -1,40 +1,85 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getMe, updateMe } from "@/lib/api/clientApi";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/authStore";
+import { updateMe } from "@/lib/api/clientApi";
+import { useState } from "react";
+import css from "./EditProfilePage.module.css";
+import { useMutation } from "@tanstack/react-query";
 
-const EditProfile = () => {
-  const [userName, setUserName] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+export default function EditProfilePage() {
+  const router = useRouter();
 
-  useEffect(() => {
-    getMe().then((user) => {
-      setUserName(user.userName ?? "");
-      setPhotoUrl(user.photoUrl ?? "");
+  const { user, setUser } = useAuthStore();
+
+  console.log(user);
+
+  const [username, setUsername] = useState(user?.username ?? "");
+
+  const mutation = useMutation({
+    mutationFn: updateMe,
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      router.push("/profile");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    mutation.mutate({
+      username,
     });
-  }, []);
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUserName(event.target.value);
-  };
-
-  const handleSaveUser = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    await updateMe({ userName, photoUrl });
   };
 
   return (
-    <div>
-      <h1>Edit profile</h1>
-      <br />
-      <br />
-      <form onSubmit={handleSaveUser}>
-        <input type="text" value={userName} onChange={handleChange} />
-        <br />
-        <button type="submit">Save user</button>
-      </form>
-    </div>
-  );
-};
+    <main className={css.mainContent}>
+      <div className={css.profileCard}>
+        <h1 className={css.formTitle}>Edit Profile</h1>
 
-export default EditProfile;
+        <Image
+          src={user?.avatar ?? ""}
+          alt="User Avatar"
+          width={120}
+          height={120}
+          className={css.avatar}
+        />
+
+        <form className={css.profileInfo} onSubmit={handleSubmit}>
+          <div className={css.usernameWrapper}>
+            <label htmlFor="username">Username:</label>
+
+            <input
+              id="username"
+              type="text"
+              className={css.input}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+
+          <p>Email: {user?.email}</p>
+
+          <div className={css.actions}>
+            <button
+              type="submit"
+              className={css.saveButton}
+              disabled={mutation.isPending}
+            >
+              Save
+            </button>
+
+            <button
+              type="button"
+              className={css.cancelButton}
+              onClick={() => router.back()}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  );
+}

@@ -1,6 +1,8 @@
-import { nextServer } from "@/lib/api/api";
 import { cookies } from "next/headers";
+import { api } from "./api";
+
 import type { Note } from "@/types/note";
+import type { User } from "@/types/user";
 
 interface GetNotesResponse {
   notes: Note[];
@@ -14,23 +16,32 @@ interface GetNotesParams {
   tag?: string;
 }
 
+const getCookieHeader = async () => {
+  const cookieStore = await cookies();
+
+  return cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+};
+
 export const fetchNotes = async ({
   page,
   perPage,
   search,
   tag,
 }: GetNotesParams): Promise<GetNotesResponse> => {
-  const cookieStore = await cookies();
+  const cookie = await getCookieHeader();
 
-  const { data } = await nextServer.get<GetNotesResponse>("/notes", {
+  const { data } = await api.get<GetNotesResponse>("/notes", {
+    headers: {
+      Cookie: cookie,
+    },
     params: {
       page,
       perPage,
       search,
       tag,
-    },
-    headers: {
-      Cookie: cookieStore.toString(),
     },
   });
 
@@ -38,24 +49,35 @@ export const fetchNotes = async ({
 };
 
 export const fetchNoteById = async (noteId: string): Promise<Note> => {
-  const cookieStore = await cookies();
+  const cookie = await getCookieHeader();
 
-  const { data } = await nextServer.get<Note>(`/notes/${noteId}`, {
+  const { data } = await api.get<Note>(`/notes/${noteId}`, {
     headers: {
-      Cookie: cookieStore.toString(),
+      Cookie: cookie,
     },
   });
 
   return data;
 };
 
-export const checkServerSession = async () => {
-  const cookieStore = await cookies();
-  const res = await nextServer.get("/auth/session", {
+export const checkSession = async () => {
+  const cookie = await getCookieHeader();
+
+  return api.get("/auth/session", {
     headers: {
-      Cookie: cookieStore.toString(),
+      Cookie: cookie,
+    },
+  });
+};
+
+export const getMe = async (): Promise<User> => {
+  const cookie = await getCookieHeader();
+
+  const { data } = await api.get<User>("/users/me", {
+    headers: {
+      Cookie: cookie,
     },
   });
 
-  return res;
+  return data;
 };

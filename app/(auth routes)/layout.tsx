@@ -1,3 +1,5 @@
+// app/(auth routes)/layout.tsx
+
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
@@ -13,9 +15,8 @@ export default function PublicLayout({ children }: Props) {
 
   useEffect(() => {
     // 1. Примусово оновлюємо серверні дані
-    router.refresh();
+    router.refresh(); // 2. Безпечно оновлюємо стан loading
 
-    // 2. Безпечно оновлюємо стан loading
     startTransition(() => {
       setLoading(false);
     });
