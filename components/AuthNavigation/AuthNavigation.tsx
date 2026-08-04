@@ -11,6 +11,7 @@ import css from "./AuthNavigation.module.css";
 const AuthNavigation = () => {
   // Отримуємо поточну сесію та юзера
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
 
   const router = useRouter();
   const clearIsAuthenticated = useAuthStore(
@@ -32,7 +33,7 @@ const AuthNavigation = () => {
   return isAuthenticated ? (
     <li className={css.navigationItem}>
       <Link href="/profile" className={css.navigationLink}>
-        Profile
+        {user?.username ?? user?.email}
       </Link>
       <button className={css.logoutButton} onClick={handleLogout}>
         Logout
